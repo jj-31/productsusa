@@ -2,6 +2,19 @@ using BlazorApp.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+
+builder.Services.AddScoped(sp => 
+    new HttpClient
+    { 
+        // BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) 
+        // BaseAddress = new Uri("https://api.github.com/repos/dotnet/aspnetcore/branches")
+        BaseAddress = new Uri("http://localhost:5055/products")
+    });
+
+
+
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

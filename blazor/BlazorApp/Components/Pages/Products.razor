@@ -1,5 +1,8 @@
 @page "/prods"
+@using System.Text.Json
+@using System.Text.Json.Serialization
 @attribute [StreamRendering]
+@inject HttpClient Client
 
 <PageTitle>Products</PageTitle>
 
@@ -26,35 +29,48 @@ else
             @foreach (var product in products)
             {
                 <tr>
-                    <td>@product.ProductName</td>
+                    <td>@product.productName</td>
                     <td>product.Type</td>
-                    <td>@product.ProductUrl</td>
+                    <td>@product.productUrl</td>
                     <td>product.Description</td>
                 </tr>
-            }
+            } 
         </tbody>
     </table>
 }
 
 @code {
     private Product[]? products;
+    private bool getBranchesError;
+    private bool shouldRender;
 
     protected override async Task OnInitializedAsync()
     {
-        var startDate = DateOnly.FromDateTime(DateTime.Now);
-        var summaries = new[] { "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching" };
-        products = Enumerable.Range(1, 5).Select(index => new Product
+        using var request = new HttpRequestMessage(HttpMethod.Get,
+            "http://localhost:5055/products");
+
+        using var response = await Client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
         {
-            ProductName = summaries[index],
-            ProductUrl = "test"
-        }).ToArray();
+            using var responseStream = await response.Content.ReadAsStreamAsync();
+            products = (await JsonSerializer
+                .DeserializeAsync<IEnumerable<Product>>(responseStream))
+                .ToArray<Product>() ?? Array.Empty<Product>();
+        }
+        else
+        {
+            getBranchesError = true;
+        }
+
+        shouldRender = true;
     }
 
     private class Product
     {
         // product profile
-        public string ProductName { get; set; } = "";
+        public string productName { get; set; } = "";
         
-        public string ProductUrl { get; set;}  = "";
+        public string productUrl { get; set;}  = "";
     }
 }
